@@ -1,9 +1,9 @@
 process_only_first_file: false
 flush_nbr_rows: 1000
 
-src_csv_folder: "/Fracking/fracfocuscsv"
-tgt_csv_folder: "/Fracking/fracfocuscsv/xlated"
-toxicities_folder: "toxicities"
+src_csv_folder: "~/Fracking/FracFocusCSV"
+tgt_csv_folder: "~/Fracking/fracfocuscsv/xlated"
+toxicities_folder: "~/Fracking/toxicities"
 
 src_file_pattern: "FracFocusRegistry_"
 
