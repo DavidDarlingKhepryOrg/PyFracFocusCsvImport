@@ -59,6 +59,8 @@ if src_csv_folder.startswith("~"):
     src_csv_folder = os.path.expanduser(src_csv_folder)
 if tgt_csv_folder.startswith("~"):
     tgt_csv_folder = os.path.expanduser(tgt_csv_folder)
+if toxicities_folder.startswith("~"):
+    toxicities_folder = os.path.expanduser(toxicities_folder)
 
 os.makedirs(src_csv_folder, exist_ok=True)
 os.makedirs(tgt_csv_folder, exist_ok=True)
@@ -110,7 +112,9 @@ ingredient_writer.writeheader()
 ingredient_flattened_numeric_keys = {}
 ingredient_flattened_numeric_col_max_sizes = {}
 ingredient_flattened_numeric_col_names = APP_SETTINGS['ingredient_file_flattened_numeric_info']['col_names']
-ingredient_flattened_numeric_file_name = os.path.join(tgt_csv_folder, APP_SETTINGS['ingredient_file_flattened_numeric_info']['base_name'] + '.csv')
+ingredient_flattened_numeric_file_name = os.path.join(
+    tgt_csv_folder,
+    APP_SETTINGS['ingredient_file_flattened_numeric_info']['base_name'] + '.csv')
 ingredient_flattened_numeric_file = open(ingredient_flattened_numeric_file_name, "w", newline="", encoding="utf-8")
 ingredient_flattened_numeric_writer = csv.DictWriter(ingredient_flattened_numeric_file,
                                                      quoting=csv.QUOTE_MINIMAL,
@@ -123,9 +127,13 @@ ingredient_flattened_numeric_writer.writeheader()
 toxicities_flattened_numeric_col_names = APP_SETTINGS['toxicity_file_flattened_numeric_info']['col_names']
 toxicities_flattened_numeric_dict = {}
 toxicities_flattened_numeric_file_name = f"{toxicities_folder}/Chemical_Toxicities_Blended_Flattened_Numeric.csv"
-with open(toxicities_flattened_numeric_file_name, "r", newline="") as tox_file:
+with open(toxicities_flattened_numeric_file_name, "r", newline="", encoding="iso-8859-1") as tox_file:
     rows = 0
-    chm_csv_reader = csv.DictReader(tox_file, fieldnames=toxicities_flattened_numeric_col_names, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    chm_csv_reader = csv.DictReader(tox_file,
+                                    fieldnames=toxicities_flattened_numeric_col_names,
+                                    delimiter=',',
+                                    quotechar='"',
+                                    quoting=csv.QUOTE_MINIMAL)
     for row in chm_csv_reader:
         rows += 1
         if rows > 1:
@@ -156,7 +164,7 @@ for root, dirs, files in os.walk(src_csv_folder):
 # translate the FracFocus CSV files as
 # specified in the app_settings YAML file
 for root, dirs, files in os.walk(src_csv_folder):
-    for file in files:
+    for file in sorted(files):
         if file.startswith(src_file_pattern):
             src_file_name = os.path.join(root, file)
             tgt_file_name = os.path.join(tgt_csv_folder, file)
@@ -258,7 +266,8 @@ for root, dirs, files in os.walk(src_csv_folder):
                         ingredient_row = {key: value for key, value in tgt_row.items() if key in ingredient_col_names}
                         ingredient_key = ingredient_row['ingredient_key']
                         if ingredient_key not in ingredient_keys:
-                            ingredient_row['ingredient_comment'] = ingredient_row['ingredient_comment'].replace('\n', '')
+                            ingredient_row['ingredient_comment'] = \
+                                ingredient_row['ingredient_comment'].replace('\n', '')
                             ingredient_row['ingredient_name'] = ingredient_row['ingredient_name'].replace('\n', '')
                             ingredient_row[hex_digest_col_name] = get_hex_digest_for_row(ingredient_row)
                             ingredient_keys[ingredient_key] = None
@@ -275,14 +284,16 @@ for root, dirs, files in os.walk(src_csv_folder):
                                     ingredient_col_max_sizes[key] = len(value)
 
                         # write appropriate columns to the ingredients flattened numeric CSV file
-                        ingredient_row = {key: value for key, value in tgt_row.items() if key in ingredient_flattened_numeric_col_names}
+                        ingredient_row = {key: value for key, value in tgt_row.items()
+                                          if key in ingredient_flattened_numeric_col_names}
                         ingredient_key = ingredient_row['ingredient_key']
                         if ingredient_key not in ingredient_flattened_numeric_keys:
                             cas_nbr = ingredient_row['cas_nbr']
                             if cas_nbr in toxicities_flattened_numeric_dict:
                                 toxicity_dict = toxicities_flattened_numeric_dict[cas_nbr]
                                 ingredient_row.update(toxicity_dict)
-                            ingredient_row['ingredient_comment'] = ingredient_row['ingredient_comment'].replace('\n', '')
+                            ingredient_row['ingredient_comment'] = \
+                                ingredient_row['ingredient_comment'].replace('\n', '')
                             ingredient_row['ingredient_name'] = ingredient_row['ingredient_name'].replace('\n', '')
                             ingredient_row[hex_digest_col_name] = get_hex_digest_for_row(ingredient_row)
                             ingredient_flattened_numeric_keys[ingredient_key] = None
@@ -293,7 +304,8 @@ for root, dirs, files in os.walk(src_csv_folder):
                             # for each of the target columns
                             for key, value in ingredient_row.items():
                                 try:
-                                    if type(value) is str and len(value) > ingredient_flattened_numeric_col_max_sizes[key]:
+                                    if type(value) is str \
+                                            and len(value) > ingredient_flattened_numeric_col_max_sizes[key]:
                                         ingredient_flattened_numeric_col_max_sizes[key] = len(value)
                                 except KeyError:
                                     ingredient_flattened_numeric_col_max_sizes[key] = len(value)
@@ -324,3 +336,6 @@ pprint(purpose_col_max_sizes)
 
 print('ingredients columns maximum sizes')
 pprint(ingredient_col_max_sizes)
+
+print('')
+print('Processing has finished!')
